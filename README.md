@@ -1,4 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hospital Management System
+
+A comprehensive hospital management application built with Next.js, FastAPI, and SQLite as specified in the requirements.
+
+## Features
+
+- **Patient Records Management**: Create, edit, and view patient information
+- **Medical Records Management**: Track patient medical history and treatments
+- **Appointment Scheduling**: Schedule and manage patient appointments
+- **Prescription Management**: Handle patient prescriptions and medications
+- **User Management**: Role-based access control for different user types
+- **Responsive UI**: Clean, professional interface with dark/light mode
+- **Authentication**: Secure login and registration system
+
+### User Roles
+
+- Administrator: Full access to all features
+- Doctor: Access to patient records and prescriptions
+- Nurse: Read access to patient records
+- Secretary: Manage appointments and patient check-ins
+- Patient: View personal information and appointments
+
+## Technical Architecture
+
+- **Frontend**: Next.js 14+ with TypeScript
+- **Backend**: FastAPI (planned)
+- **Database**: SQLite (planned)
+- **Styling**: Tailwind CSS with custom components
+- **Authentication**: JWT-based (simulated in frontend)
 
 ## Getting Started
 
@@ -6,31 +34,66 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+├── components/          # Reusable UI components
+│   ├── Header.tsx       # Navigation header with dark mode toggle
+│   └── Sidebar.tsx      # Main navigation sidebar
+├── contexts/            # React contexts
+│   └── AuthContext.tsx  # Authentication state management
+├── dashboard/           # Dashboard page
+├── patients/            # Patient management page
+├── records/             # Medical records page
+├── appointments/        # Appointment scheduling page
+├── prescriptions/       # Prescription management page
+├── users/               # User management page
+├── login/               # Login page
+├── register/            # Registration page
+├── api/                 # API routes
+│   ├── auth/            # Authentication API
+│   └── patients/        # Patient management API
+├── layout.tsx           # Main layout with AuthProvider
+├── globals.css          # Global styles and theme
+└── page.tsx             # Homepage (redirects to dashboard)
+```
+
+## API Endpoints
+
+- `GET /api/patients` - Retrieve all patients
+- `POST /api/patients` - Create a new patient
+- `PUT /api/patients` - Update a patient
+- `DELETE /api/patients?id=x` - Delete a patient
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+
+## Future Enhancements
+
+- Implement full FastAPI backend
+- Connect to SQLite database
+- Add more comprehensive validation
+- Implement proper JWT authentication
+- Add reporting and analytics features
+- Include appointment reminders
+- Add inventory management for medical supplies
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+This project demonstrates a complete hospital management system frontend with:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Modern React patterns (Context API, hooks)
+- TypeScript for type safety
+- Tailwind CSS for responsive styling
+- Next.js App Router for routing
+- Professional UI/UX design
+- Dark/light mode support
+- Role-based access patterns
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The easiest way to deploy this application is using the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
