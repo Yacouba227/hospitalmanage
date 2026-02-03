@@ -1,56 +1,98 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
-export default function PrescriptionsPage() {
-  // Define the type for our prescriptions
-  type Prescription = {
+type Prescription = {
     id: number;
-    recordId: number;
-    patientId: number;
-    patientName: string;
+    record_id: number;
+    patient_id: number;
     medication: string;
     dosage: string;
     frequency: string;
     duration: string;
-    prescribedBy: string;
-    datePrescribed: string;
+    prescribed_by: string;
+    date_prescribed: string;
     status: 'Active' | 'Completed' | 'Cancelled';
+    created_at: string;
+    updated_at: string;
   };
 
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([
-    { id: 1, recordId: 1, patientId: 1, patientName: 'John Doe', medication: 'Aspirin', dosage: '100mg', frequency: 'Once daily', duration: '30 days', prescribedBy: 'Dr. Smith', datePrescribed: '2026-02-01', status: 'Active' },
-    { id: 2, recordId: 2, patientId: 2, patientName: 'Jane Smith', medication: 'Amoxicillin', dosage: '500mg', frequency: 'Twice daily', duration: '10 days', prescribedBy: 'Dr. Johnson', datePrescribed: '2026-02-02', status: 'Active' },
-    { id: 3, recordId: 3, patientId: 3, patientName: 'Robert Brown', medication: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', duration: '90 days', prescribedBy: 'Dr. Williams', datePrescribed: '2026-02-03', status: 'Active' },
-  ]);
+  type MedicalRecord = {
+    id: number;
+    patient_id: number;
+    date: string;
+    doctor: string;
+    diagnosis: string;
+    treatment: string;
+    status: string;
+  };
 
-  const [medicalRecords] = useState([
-    { id: 1, patientId: 1, patientName: 'John Doe' },
-    { id: 2, patientId: 2, patientName: 'Jane Smith' },
-    { id: 3, patientId: 3, patientName: 'Robert Brown' },
-  ]);
+  export default function PrescriptionsPage() {
+    const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+    const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const [doctors] = useState([
-    'Dr. Smith',
-    'Dr. Johnson',
-    'Dr. Williams',
-    'Dr. Davis',
-    'Dr. Miller'
-  ]);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    useEffect(() => {
+      fetchPrescriptions();
+      fetchMedicalRecords();
+    }, []);
+    
+    const fetchPrescriptions = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/prescriptions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        setPrescriptions(data);
+      } catch (error) {
+        console.error('Error fetching prescriptions:', error);
+      }
+    };
+    
+    const fetchMedicalRecords = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/records`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        setMedicalRecords(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching medical records:', error);
+        setLoading(false);
+      }
+    };
+    
+    const [doctors] = useState([
+      'Dr. Smith',
+      'Dr. Johnson',
+      'Dr. Williams',
+      'Dr. Davis',
+      'Dr. Miller'
+    ]);
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
   
   const [formData, setFormData] = useState({
-    recordId: 0,
+    record_id: 0,
+    patient_id: 0,
     medication: '',
     dosage: '',
     frequency: '',
     duration: '',
-    prescribedBy: '',
-    datePrescribed: '',
+    prescribed_by: '',
+    date_prescribed: '',
     status: 'Active' as 'Active' | 'Completed' | 'Cancelled'
   });
 
@@ -58,68 +100,103 @@ export default function PrescriptionsPage() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'recordId' ? parseInt(value) : value
+      [name]: name === 'record_id' ? parseInt(value) : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingPrescription) {
-      // Update existing prescription
-      const relatedRecord = medicalRecords.find(r => r.id === formData.recordId);
-      const patientName = relatedRecord ? relatedRecord.patientName : '';
-      setPrescriptions(prev => prev.map(prescription => 
-        prescription.id === editingPrescription.id 
-          ? { ...prescription, ...formData, patientName, patientId: relatedRecord?.patientId || 0 } 
-          : prescription
-      ));
-    } else {
-      // Add new prescription
-      const relatedRecord = medicalRecords.find(r => r.id === formData.recordId);
-      const patientName = relatedRecord ? relatedRecord.patientName : '';
-      const patientId = relatedRecord?.patientId || 0;
-      const newPrescription: Prescription = {
-        id: Date.now(), // In a real app, this would come from the backend
-        recordId: formData.recordId,
-        patientId,
-        patientName,
-        medication: formData.medication,
-        dosage: formData.dosage,
-        frequency: formData.frequency,
-        duration: formData.duration,
-        prescribedBy: formData.prescribedBy,
-        datePrescribed: formData.datePrescribed,
-        status: formData.status
-      };
-      setPrescriptions(prev => [...prev, newPrescription]);
+    try {
+      const token = localStorage.getItem('auth-token');
+      
+      if (editingPrescription) {
+        // Update existing prescription
+        const response = await fetch(`${apiUrl}/prescriptions/${editingPrescription.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            record_id: formData.record_id,
+            patient_id: formData.patient_id,
+            medication: formData.medication,
+            dosage: formData.dosage,
+            frequency: formData.frequency,
+            duration: formData.duration,
+            prescribed_by: formData.prescribed_by,
+            date_prescribed: formData.date_prescribed,
+            status: formData.status
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update prescription');
+        
+        const updatedPrescription = await response.json();
+        
+        setPrescriptions(prev => prev.map(prescription => 
+          prescription.id === editingPrescription.id 
+            ? updatedPrescription 
+            : prescription
+        ));
+      } else {
+        // Add new prescription
+        const response = await fetch(`${apiUrl}/prescriptions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            record_id: formData.record_id,
+            patient_id: formData.patient_id,
+            medication: formData.medication,
+            dosage: formData.dosage,
+            frequency: formData.frequency,
+            duration: formData.duration,
+            prescribed_by: formData.prescribed_by,
+            date_prescribed: formData.date_prescribed,
+            status: formData.status
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to create prescription');
+        
+        const newPrescription = await response.json();
+        setPrescriptions(prev => [...prev, newPrescription]);
+      }
+      
+      // Reset form and close modal
+      setFormData({ 
+        record_id: 0, 
+        patient_id: 0, 
+        medication: '', 
+        dosage: '', 
+        frequency: '', 
+        duration: '', 
+        prescribed_by: '', 
+        date_prescribed: '', 
+        status: 'Active' 
+      });
+      setShowModal(false);
+      setEditingPrescription(null);
+    } catch (error) {
+      console.error('Error saving prescription:', error);
     }
-    
-    // Reset form and close modal
-    setFormData({ 
-      recordId: 0, 
-      medication: '', 
-      dosage: '', 
-      frequency: '', 
-      duration: '', 
-      prescribedBy: '', 
-      datePrescribed: '', 
-      status: 'Active' 
-    });
-    setShowModal(false);
-    setEditingPrescription(null);
   };
 
   const handleEdit = (prescription: Prescription) => {
     setEditingPrescription(prescription);
     setFormData({
-      recordId: prescription.recordId,
+      record_id: prescription.record_id,
+      patient_id: prescription.patient_id,
       medication: prescription.medication,
       dosage: prescription.dosage,
       frequency: prescription.frequency,
       duration: prescription.duration,
-      prescribedBy: prescription.prescribedBy,
-      datePrescribed: prescription.datePrescribed,
+      prescribed_by: prescription.prescribed_by,
+      date_prescribed: prescription.date_prescribed,
       status: prescription.status
     });
     setShowModal(true);
@@ -132,13 +209,14 @@ export default function PrescriptionsPage() {
   const openAddModal = () => {
     setEditingPrescription(null);
     setFormData({ 
-      recordId: 0, 
+      record_id: 0, 
+      patient_id: 0,
       medication: '', 
       dosage: '', 
       frequency: '', 
       duration: '', 
-      prescribedBy: '', 
-      datePrescribed: '', 
+      prescribed_by: '', 
+      date_prescribed: '', 
       status: 'Active' 
     });
     setShowModal(true);
@@ -211,7 +289,7 @@ export default function PrescriptionsPage() {
                     {prescriptions.map((prescription) => (
                       <tr key={prescription.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{prescription.patientName}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{medicalRecords.find(r => r.id === prescription.patient_id)?.patient_id || 'Unknown Patient'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500 dark:text-gray-400">{prescription.medication}</div>
@@ -226,10 +304,10 @@ export default function PrescriptionsPage() {
                           <div className="text-sm text-gray-500 dark:text-gray-400">{prescription.duration}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{prescription.prescribedBy}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{prescription.prescribed_by}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{prescription.datePrescribed}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{prescription.date_prescribed}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -277,20 +355,20 @@ export default function PrescriptionsPage() {
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="recordId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="record_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Medical Record
                   </label>
                   <select
-                    id="recordId"
-                    name="recordId"
-                    value={formData.recordId}
+                    id="record_id"
+                    name="record_id"
+                    value={formData.record_id}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                   >
                     <option value={0}>Select Medical Record</option>
                     {medicalRecords.map(record => (
-                      <option key={record.id} value={record.id}>{record.patientName} (ID: {record.id})</option>
+                      <option key={record.id} value={record.id}>{medicalRecords.find(r => r.id === record.patient_id)?.patient_id || 'Patient'} (ID: {record.id})</option>
                     ))}
                   </select>
                 </div>
@@ -301,9 +379,9 @@ export default function PrescriptionsPage() {
                   </label>
                   <input
                     type="date"
-                    id="datePrescribed"
-                    name="datePrescribed"
-                    value={formData.datePrescribed}
+                    id="date_prescribed"
+                    name="date_prescribed"
+                    value={formData.date_prescribed}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
@@ -381,9 +459,9 @@ export default function PrescriptionsPage() {
                     Prescribed By
                   </label>
                   <select
-                    id="prescribedBy"
-                    name="prescribedBy"
-                    value={formData.prescribedBy}
+                    id="prescribed_by"
+                    name="prescribed_by"
+                    value={formData.prescribed_by}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"

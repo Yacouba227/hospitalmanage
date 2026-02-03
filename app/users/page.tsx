@@ -1,31 +1,55 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
-export default function UsersPage() {
-  // Define the type for our users
-  type User = {
+type User = {
     id: number;
     name: string;
     email: string;
     phone: string;
     role: 'Administrator' | 'Doctor' | 'Nurse' | 'Secretary' | 'Patient';
     department?: string;
-    status: 'Active' | 'Inactive';
+    is_active: boolean;
+    created_at: string;
   };
 
-  const [users, setUsers] = useState<User[]>([
-    { id: 1, name: 'Admin User', email: 'admin@hospital.com', phone: '+1 (555) 100-0001', role: 'Administrator', status: 'Active' },
-    { id: 2, name: 'Dr. John Smith', email: 'dr.smith@hospital.com', phone: '+1 (555) 100-0002', role: 'Doctor', department: 'Cardiology', status: 'Active' },
-    { id: 3, name: 'Jane Johnson', email: 'j.johnson@hospital.com', phone: '+1 (555) 100-0003', role: 'Nurse', department: 'Emergency', status: 'Active' },
-    { id: 4, name: 'Robert Williams', email: 'r.williams@hospital.com', phone: '+1 (555) 100-0004', role: 'Secretary', status: 'Active' },
-    { id: 5, name: 'Emily Davis', email: 'emily.davis@hospital.com', phone: '+1 (555) 100-0005', role: 'Doctor', department: 'Pediatrics', status: 'Inactive' },
-  ]);
+  export default function UsersPage() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    useEffect(() => {
+      fetchUsers();
+    }, []);
+    
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/users`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        console.log('Users API response:', data); // Debug log
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else {
+          console.error('Expected array but got:', data);
+          setUsers([]);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setLoading(false);
+      }
+    };
+    
+    const [showModal, setShowModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -33,47 +57,89 @@ export default function UsersPage() {
     phone: '',
     role: 'Doctor' as 'Administrator' | 'Doctor' | 'Nurse' | 'Secretary' | 'Patient',
     department: '',
-    status: 'Active' as 'Active' | 'Inactive'
+    is_active: true
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'is_active' ? value === 'true' : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingUser) {
-      // Update existing user
-      setUsers(prev => prev.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...formData } 
-          : user
-      ));
-    } else {
-      // Add new user
-      const newUser: User = {
-        id: Date.now(), // In a real app, this would come from the backend
-        ...formData
-      };
-      setUsers(prev => [...prev, newUser]);
+    try {
+      const token = localStorage.getItem('auth-token');
+      
+      if (editingUser) {
+        // Update existing user
+        const response = await fetch(`${apiUrl}/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            role: formData.role,
+            department: formData.department,
+            is_active: formData.is_active
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update user');
+        
+        const updatedUser = await response.json();
+        
+        setUsers(prev => prev.map(user => 
+          user.id === editingUser.id 
+            ? updatedUser 
+            : user
+        ));
+      } else {
+        // Add new user
+        const response = await fetch(`${apiUrl}/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            role: formData.role,
+            department: formData.department,
+            password: 'defaultPassword123', // Default password for new users
+            is_active: formData.is_active
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to create user');
+        
+        const newUser = await response.json();
+        setUsers(prev => [...prev, newUser]);
+      }
+      
+      // Reset form and close modal
+      setFormData({ 
+        name: '', 
+        email: '', 
+        phone: '', 
+        role: 'Doctor', 
+        department: '', 
+        is_active: true
+      });
+      setShowModal(false);
+      setEditingUser(null);
+    } catch (error) {
+      console.error('Error saving user:', error);
     }
-    
-    // Reset form and close modal
-    setFormData({ 
-      name: '', 
-      email: '', 
-      phone: '', 
-      role: 'Doctor', 
-      department: '', 
-      status: 'Active' 
-    });
-    setShowModal(false);
-    setEditingUser(null);
   };
 
   const handleEdit = (user: User) => {
@@ -84,7 +150,7 @@ export default function UsersPage() {
       phone: user.phone,
       role: user.role,
       department: user.department || '',
-      status: user.status
+      is_active: user.is_active
     });
     setShowModal(true);
   };
@@ -101,7 +167,7 @@ export default function UsersPage() {
       phone: '', 
       role: 'Doctor', 
       department: '', 
-      status: 'Active' 
+      is_active: true
     });
     setShowModal(true);
   };
@@ -164,7 +230,7 @@ export default function UsersPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {users.map((user) => (
+                    {Array.isArray(users) && users.map((user) => (
                       <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
@@ -183,11 +249,11 @@ export default function UsersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.status === 'Active' 
+                            user.is_active 
                               ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' 
                               : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
                           }`}>
-                            {user.status}
+                            {user.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -205,7 +271,13 @@ export default function UsersPage() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    )) || (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                          {loading ? "Loading..." : "No users found"}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -312,14 +384,14 @@ export default function UsersPage() {
                     Status
                   </label>
                   <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
+                    id="is_active"
+                    name="is_active"
+                    value={formData.is_active.toString()}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
                   </select>
                 </div>
               </div>

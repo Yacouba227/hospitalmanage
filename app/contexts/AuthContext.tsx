@@ -24,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     // Check if user is logged in on initial load
     const storedUser = localStorage.getItem('user');
@@ -37,51 +39,112 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real application, you would call your backend API here
-    // For demo purposes, we'll simulate a successful login
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // For demo purposes, accept any email/password combination
-    // In a real app, you'd validate against your backend
-    const mockUser: User = {
-      id: 1,
-      name: 'Demo User',
-      email: email,
-      role: 'Administrator' // Default role for demo
-    };
-    
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    
-    return true;
+    try {
+      // Call the backend API to get JWT token
+      const response = await fetch(`${apiUrl}/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          username: email,
+          password: password,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Login failed:', response.statusText);
+        return false;
+      }
+
+      const data = await response.json();
+      const token = data.access_token;
+      
+      // Store the token in localStorage
+      localStorage.setItem('auth-token', token);
+      
+      // Now fetch user details using the token
+      const userResponse = await fetch(`${apiUrl}/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!userResponse.ok) {
+        console.error('Failed to fetch user details:', userResponse.statusText);
+        return false;
+      }
+      
+      const users = await userResponse.json();
+      const foundUser = users.find((u: any) => u.email === email);
+      
+      if (!foundUser) {
+        console.error('User not found after login');
+        return false;
+      }
+      
+      // Create user object
+      const loggedInUser: User = {
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
+        role: foundUser.role,
+      };
+      
+      setUser(loggedInUser);
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
+      
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('auth-token');
     router.push('/login');
   };
 
   const register = async (userData: Omit<User, 'id'>): Promise<boolean> => {
-    // In a real application, you would call your backend API here
-    // For demo purposes, we'll simulate a successful registration
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // For demo purposes, simulate creating a new user
-    const newUser: User = {
-      id: Date.now(), // In a real app, this would come from your backend
-      ...userData
-    };
-    
-    // In a real app, you might automatically log in the user after registration
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    
-    return true;
+    try {
+      // Call the backend API to register user
+      const response = await fetch(`${apiUrl}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...userData,
+          password: 'defaultPassword123' // Default password for new users
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Registration failed:', response.statusText);
+        return false;
+      }
+
+      const newUser = await response.json();
+      
+      // Create user object
+      const registeredUser: User = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      };
+      
+      setUser(registeredUser);
+      localStorage.setItem('user', JSON.stringify(registeredUser));
+      
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      return false;
+    }
   };
 
   const isAuthenticated = !!user;

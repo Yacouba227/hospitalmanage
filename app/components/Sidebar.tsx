@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserGroupIcon, DocumentTextIcon, CalendarIcon, ClipboardDocumentListIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
+import logo from '../../assets/Logo.png';
 
 const Sidebar = () => {
   const pathname = usePathname();
 
   const navItems = [
-    { name: 'Dashboard', href: '/', icon: UserGroupIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: UserGroupIcon },
     { name: 'Patients', href: '/patients', icon: UserGroupIcon },
     { name: 'Medical Records', href: '/records', icon: DocumentTextIcon },
     { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
@@ -20,7 +22,17 @@ const Sidebar = () => {
     <aside className="fixed inset-y-0 left-0 z-10 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">Hospital Admin</h1>
+          {/* <div className="flex items-center">
+            <Image 
+              src={logo} 
+              alt="Hospital Logo" 
+              width={40} 
+              height={40}
+              className="rounded-md"
+            />
+            
+          </div> */}
+          <h1 className="text-xl text-center font-bold text-blue-600 dark:text-blue-400 ml-2">Hospital Management System</h1>
         </div>
         
         <nav className="flex-1 px-2 py-4">

@@ -1,48 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
-export default function AppointmentsPage() {
-  // Define the type for our appointments
-  type Appointment = {
+type Appointment = {
     id: number;
-    patientId: number;
-    patientName: string;
+    patient_id: number;
     date: string;
     time: string;
     doctor: string;
     reason: string;
     status: 'Scheduled' | 'Completed' | 'Cancelled';
+    owner_id: number;
+    created_at: string;
+    updated_at: string;
   };
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: 1, patientId: 1, patientName: 'John Doe', date: '2026-02-10', time: '10:00', doctor: 'Dr. Smith', reason: 'Annual checkup', status: 'Scheduled' },
-    { id: 2, patientId: 2, patientName: 'Jane Smith', date: '2026-02-11', time: '14:30', doctor: 'Dr. Johnson', reason: 'Follow-up visit', status: 'Scheduled' },
-    { id: 3, patientId: 3, patientName: 'Robert Brown', date: '2026-02-09', time: '09:15', doctor: 'Dr. Williams', reason: 'Consultation', status: 'Completed' },
-  ]);
+  type Patient = {
+    id: number;
+    name: string;
+  };
 
-  const [patients] = useState([
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Robert Brown' },
-    { id: 4, name: 'Emily Davis' },
-  ]);
+  export default function AppointmentsPage() {
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const [doctors] = useState([
-    'Dr. Smith',
-    'Dr. Johnson',
-    'Dr. Williams',
-    'Dr. Davis',
-    'Dr. Miller'
-  ]);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    useEffect(() => {
+      fetchAppointments();
+      fetchPatients();
+    }, []);
+    
+    const fetchAppointments = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/appointments`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        setAppointments(data);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+    
+    const fetchPatients = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/patients`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        // Map to simpler format
+        setPatients(data.map((p: any) => ({ id: p.id, name: p.name })));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+        setLoading(false);
+      }
+    };
+    
+    const [doctors] = useState([
+      'Dr. Smith',
+      'Dr. Johnson',
+      'Dr. Williams',
+      'Dr. Davis',
+      'Dr. Miller'
+    ]);
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+    const [showModal, setShowModal] = useState(false);
+    const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   
   const [formData, setFormData] = useState({
-    patientId: 0,
+    patient_id: 0,
     date: '',
     time: '',
     doctor: '',
@@ -54,42 +91,80 @@ export default function AppointmentsPage() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'patientId' ? parseInt(value) : value
+      [name]: name === 'patient_id' ? parseInt(value) : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingAppointment) {
-      // Update existing appointment
-      const updatedPatientName = patients.find(p => p.id === formData.patientId)?.name || '';
-      setAppointments(prev => prev.map(appointment => 
-        appointment.id === editingAppointment.id 
-          ? { ...appointment, ...formData, patientName: updatedPatientName } 
-          : appointment
-      ));
-    } else {
-      // Add new appointment
-      const patientName = patients.find(p => p.id === formData.patientId)?.name || '';
-      const newAppointment: Appointment = {
-        id: Date.now(), // In a real app, this would come from the backend
-        ...formData,
-        patientName
-      };
-      setAppointments(prev => [...prev, newAppointment]);
+    try {
+      const token = localStorage.getItem('auth-token');
+      
+      if (editingAppointment) {
+        // Update existing appointment
+        const response = await fetch(`${apiUrl}/appointments/${editingAppointment.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            patient_id: formData.patient_id,
+            date: formData.date,
+            time: formData.time,
+            doctor: formData.doctor,
+            reason: formData.reason,
+            status: formData.status
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update appointment');
+        
+        const updatedAppointment = await response.json();
+        
+        setAppointments(prev => prev.map(appointment => 
+          appointment.id === editingAppointment.id 
+            ? updatedAppointment 
+            : appointment
+        ));
+      } else {
+        // Add new appointment
+        const response = await fetch(`${apiUrl}/appointments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            patient_id: formData.patient_id,
+            date: formData.date,
+            time: formData.time,
+            doctor: formData.doctor,
+            reason: formData.reason,
+            status: formData.status
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to create appointment');
+        
+        const newAppointment = await response.json();
+        setAppointments(prev => [...prev, newAppointment]);
+      }
+      
+      // Reset form and close modal
+      setFormData({ patient_id: 0, date: '', time: '', doctor: '', reason: '', status: 'Scheduled' });
+      setShowModal(false);
+      setEditingAppointment(null);
+    } catch (error) {
+      console.error('Error saving appointment:', error);
     }
-    
-    // Reset form and close modal
-    setFormData({ patientId: 0, date: '', time: '', doctor: '', reason: '', status: 'Scheduled' });
-    setShowModal(false);
-    setEditingAppointment(null);
   };
 
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setFormData({
-      patientId: appointment.patientId,
+      patient_id: appointment.patient_id,
       date: appointment.date,
       time: appointment.time,
       doctor: appointment.doctor,
@@ -99,13 +174,27 @@ export default function AppointmentsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    setAppointments(prev => prev.filter(appointment => appointment.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const token = localStorage.getItem('auth-token');
+      const response = await fetch(`${apiUrl}/appointments/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete appointment');
+      
+      setAppointments(prev => prev.filter(appointment => appointment.id !== id));
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+    }
   };
 
   const openAddModal = () => {
     setEditingAppointment(null);
-    setFormData({ patientId: 0, date: '', time: '', doctor: '', reason: '', status: 'Scheduled' });
+    setFormData({ patient_id: 0, date: '', time: '', doctor: '', reason: '', status: 'Scheduled' });
     setShowModal(true);
   };
 
@@ -170,7 +259,7 @@ export default function AppointmentsPage() {
                     {appointments.map((appointment) => (
                       <tr key={appointment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.patientName}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{patients.find(p => p.id === appointment.patient_id)?.name || 'Unknown Patient'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500 dark:text-gray-400">{appointment.date}</div>
@@ -234,9 +323,9 @@ export default function AppointmentsPage() {
                     Patient
                   </label>
                   <select
-                    id="patientId"
-                    name="patientId"
-                    value={formData.patientId}
+                    id="patient_id"
+                    name="patient_id"
+                    value={formData.patient_id}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"

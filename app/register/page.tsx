@@ -16,6 +16,8 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     
     // Validation
     if (!name || !email || !password || !confirmPassword) {
@@ -34,30 +36,33 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${apiUrl}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password, role, action: 'register' }),
+        body: JSON.stringify({
+          name,
+          email,
+          phone: '+1 (555) 123-4567', // Default phone for registration
+          role,
+          password,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.detail || 'Registration failed');
       }
 
-      // Store the token and user info in localStorage
-      localStorage.setItem('auth-token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
+      // Since registration doesn't return a token, we'll redirect to login
       setSuccess(true);
       setError('');
       
-      // Redirect to dashboard after a delay
+      // Redirect to login after a delay
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/login');
       }, 2000);
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');

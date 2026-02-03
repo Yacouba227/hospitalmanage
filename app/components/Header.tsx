@@ -3,15 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MoonIcon, SunIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
+  const { darkMode, toggleDarkMode } = useTheme();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -22,9 +18,9 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">Hospital Management</span>
-            </Link>
+            {/* <Link href="/" className="flex-shrink-0 flex items-center">
+              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">Hospital </span>
+            </Link> */}
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
@@ -33,21 +29,21 @@ const Header = () => {
               className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
               aria-label="Toggle dark mode"
             >
-              {isDarkMode ? (
+              {darkMode ? (
                 <SunIcon className="h-5 w-5 text-yellow-400" />
               ) : (
                 <MoonIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               )}
             </button>
             
-            <div className="ml-4 relative">
+            {/* <div className="ml-4 relative">
               <button className="flex text-sm rounded-full focus:outline-none">
                 <span className="sr-only">Open user menu</span>
                 <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
                   U
                 </div>
               </button>
-            </div>
+            </div> */}
           </div>
           
           <div className="flex items-center md:hidden">
@@ -56,7 +52,7 @@ const Header = () => {
               className="p-2 mr-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
               aria-label="Toggle dark mode"
             >
-              {isDarkMode ? (
+              {darkMode ? (
                 <SunIcon className="h-5 w-5 text-yellow-400" />
               ) : (
                 <MoonIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />

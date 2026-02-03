@@ -30,13 +30,27 @@ A comprehensive hospital management application built with Next.js, FastAPI, and
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-```
+Make sure you have the following installed:
+- Node.js (v16 or higher)
+- Python (v3.7 or higher)
+- pip (Python package manager)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Running the Application
+
+1. **Start the backend server**:
+   ```bash
+   python start_backend.py
+   ```
+   This will install dependencies and start the FastAPI server on http://localhost:8000
+
+2. **In a new terminal, start the frontend**:
+   ```bash
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Project Structure
 
@@ -65,6 +79,30 @@ app/
 
 ## API Endpoints
 
+### Backend API (FastAPI running on http://localhost:8000):
+- `GET /users` - Retrieve all users
+- `POST /users` - Create a new user
+- `PUT /users/{id}` - Update a user
+- `DELETE /users/{id}` - Delete a user
+- `GET /patients` - Retrieve all patients
+- `POST /patients` - Create a new patient
+- `PUT /patients/{id}` - Update a patient
+- `DELETE /patients/{id}` - Delete a patient
+- `GET /records` - Retrieve all medical records
+- `POST /records` - Create a new medical record
+- `PUT /records/{id}` - Update a medical record
+- `DELETE /records/{id}` - Delete a medical record
+- `GET /appointments` - Retrieve all appointments
+- `POST /appointments` - Create a new appointment
+- `PUT /appointments/{id}` - Update an appointment
+- `DELETE /appointments/{id}` - Delete an appointment
+- `GET /prescriptions` - Retrieve all prescriptions
+- `POST /prescriptions` - Create a new prescription
+- `PUT /prescriptions/{id}` - Update a prescription
+- `DELETE /prescriptions/{id}` - Delete a prescription
+- `POST /token` - User login (returns JWT token)
+
+### Frontend API (Next.js API routes for fallback, mainly uses direct backend calls):
 - `GET /api/patients` - Retrieve all patients
 - `POST /api/patients` - Create a new patient
 - `PUT /api/patients` - Update a patient

@@ -1,44 +1,82 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
-export default function RecordsPage() {
-  // Define the type for our records
-  type MedicalRecord = {
+type MedicalRecord = {
     id: number;
-    patientId: number;
-    patientName: string;
+    patient_id: number;
     date: string;
     doctor: string;
     diagnosis: string;
     treatment: string;
+    observations?: string;
     status: string;
+    created_at: string;
+    updated_at: string;
   };
 
-  const [records, setRecords] = useState<MedicalRecord[]>([
-    { id: 1, patientId: 1, patientName: 'John Doe', date: '2026-02-01', doctor: 'Dr. Smith', diagnosis: 'Routine Checkup', treatment: 'General examination', status: 'Completed' },
-    { id: 2, patientId: 2, patientName: 'Jane Smith', date: '2026-02-02', doctor: 'Dr. Johnson', diagnosis: 'Flu Symptoms', treatment: 'Rest and fluids', status: 'Completed' },
-    { id: 3, patientId: 3, patientName: 'Robert Brown', date: '2026-02-03', doctor: 'Dr. Williams', diagnosis: 'Hypertension', treatment: 'Prescribed medication', status: 'In Progress' },
-  ]);
+  type Patient = {
+    id: number;
+    name: string;
+  };
 
-  const [patients] = useState([
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Robert Brown' },
-    { id: 4, name: 'Emily Davis' },
-  ]);
+  export default function RecordsPage() {
+    const [records, setRecords] = useState<MedicalRecord[]>([]);
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    useEffect(() => {
+      fetchRecords();
+      fetchPatients();
+    }, []);
+    
+    const fetchRecords = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/records`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        setRecords(data);
+      } catch (error) {
+        console.error('Error fetching records:', error);
+      }
+    };
+    
+    const fetchPatients = async () => {
+      try {
+        const token = localStorage.getItem('auth-token');
+        const response = await fetch(`${apiUrl}/patients`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        // Map to simpler format
+        setPatients(data.map((p: any) => ({ id: p.id, name: p.name })));
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+        setLoading(false);
+      }
+    };
+    
+    const [showModal, setShowModal] = useState(false);
+    const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
   
   const [formData, setFormData] = useState({
-    patientId: 0, // Changed to number
+    patient_id: 0, // Changed to number
     date: '',
     doctor: '',
     diagnosis: '',
     treatment: '',
+    observations: '',
     status: 'In Progress' as 'In Progress' | 'Completed' | 'Pending'
   });
 
@@ -46,58 +84,113 @@ export default function RecordsPage() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'patientId' ? parseInt(value) : value
+      [name]: name === 'patient_id' ? parseInt(value) : value
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingRecord) {
-      // Update existing record
-      const updatedPatientName = patients.find(p => p.id === formData.patientId)?.name || '';
-      setRecords(prev => prev.map(record => 
-        record.id === editingRecord.id 
-          ? { ...record, ...formData, patientName: updatedPatientName } 
-          : record
-      ));
-    } else {
-      // Add new record
-      const patientName = patients.find(p => p.id === formData.patientId)?.name || '';
-      const newRecord: MedicalRecord = {
-        id: Date.now(), // In a real app, this would come from the backend
-        ...formData,
-        patientName
-      };
-      setRecords(prev => [...prev, newRecord]);
+    try {
+      const token = localStorage.getItem('auth-token');
+      
+      if (editingRecord) {
+        // Update existing record
+        const response = await fetch(`${apiUrl}/records/${editingRecord.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            patient_id: formData.patient_id,
+            date: formData.date,
+            doctor: formData.doctor,
+            diagnosis: formData.diagnosis,
+            treatment: formData.treatment,
+            observations: formData.observations,
+            status: formData.status
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update record');
+        
+        const updatedRecord = await response.json();
+        
+        setRecords(prev => prev.map(record => 
+          record.id === editingRecord.id 
+            ? updatedRecord 
+            : record
+        ));
+      } else {
+        // Add new record
+        const response = await fetch(`${apiUrl}/records`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            patient_id: formData.patient_id,
+            date: formData.date,
+            doctor: formData.doctor,
+            diagnosis: formData.diagnosis,
+            treatment: formData.treatment,
+            observations: formData.observations,
+            status: formData.status
+          })
+        });
+        
+        if (!response.ok) throw new Error('Failed to create record');
+        
+        const newRecord = await response.json();
+        setRecords(prev => [...prev, newRecord]);
+      }
+      
+      // Reset form and close modal
+      setFormData({ patient_id: 0, date: '', doctor: '', diagnosis: '', treatment: '', observations: '', status: 'In Progress' });
+      setShowModal(false);
+      setEditingRecord(null);
+    } catch (error) {
+      console.error('Error saving record:', error);
     }
-    
-    // Reset form and close modal
-    setFormData({ patientId: 0, date: '', doctor: '', diagnosis: '', treatment: '', status: 'In Progress' });
-    setShowModal(false);
-    setEditingRecord(null);
   };
 
   const handleEdit = (record: MedicalRecord) => {
     setEditingRecord(record);
     setFormData({
-      patientId: record.patientId,
+      patient_id: record.patient_id,
       date: record.date,
       doctor: record.doctor,
       diagnosis: record.diagnosis,
       treatment: record.treatment,
+      observations: record.observations || '',
       status: record.status as 'In Progress' | 'Completed' | 'Pending'
     });
     setShowModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    setRecords(prev => prev.filter(record => record.id !== id));
+  const handleDelete = async (id: number) => {
+    try {
+      const token = localStorage.getItem('auth-token');
+      const response = await fetch(`${apiUrl}/records/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete record');
+      
+      setRecords(prev => prev.filter(record => record.id !== id));
+    } catch (error) {
+      console.error('Error deleting record:', error);
+    }
   };
 
   const openAddModal = () => {
     setEditingRecord(null);
-    setFormData({ patientId: 0, date: '', doctor: '', diagnosis: '', treatment: '', status: 'In Progress' });
+    setFormData({ patient_id: 0, date: '', doctor: '', diagnosis: '', treatment: '', observations: '', status: 'In Progress' });
     setShowModal(true);
   };
 
@@ -162,7 +255,7 @@ export default function RecordsPage() {
                     {records.map((record) => (
                       <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{record.patientName}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{patients.find(p => p.id === record.patient_id)?.name || 'Unknown Patient'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500 dark:text-gray-400">{record.date}</div>
@@ -224,9 +317,9 @@ export default function RecordsPage() {
                     Patient
                   </label>
                   <select
-                    id="patientId"
-                    name="patientId"
-                    value={formData.patientId}
+                    id="patient_id"
+                    name="patient_id"
+                    value={formData.patient_id}
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
