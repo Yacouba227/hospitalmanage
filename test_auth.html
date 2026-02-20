@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication Test</title>
+</head>
+<body>
+    <h1>Authentication Test Page</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function testAuth() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Test 1: Get token
+                resultDiv.innerHTML += '<p>Testing authentication...</p>';
+                
+                const tokenResponse = await fetch('http://localhost:8000/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        username: 'test@hospital.com',
+                        password: 'test123'
+                    })
+                });
+                
+                if (!tokenResponse.ok) {
+                    throw new Error('Failed to get token');
+                }
+                
+                const tokenData = await tokenResponse.json();
+                resultDiv.innerHTML += `<p style="color: green;">✓ Token received: ${tokenData.access_token.substring(0, 20)}...</p>`;
+                
+                // Test 2: Use token to get users
+                const userResponse = await fetch('http://localhost:8000/users', {
+                    headers: {
+                        'Authorization': `Bearer ${tokenData.access_token}`
+                    }
+                });
+                
+                if (!userResponse.ok) {
+                    throw new Error('Failed to get user data');
+                }
+                
+                const users = await userResponse.json();
+                const currentUser = users.find(u => u.email === 'test@hospital.com');
+                
+                resultDiv.innerHTML += `<p style="color: green;">✓ User found: ${currentUser.name}</p>`;
+                resultDiv.innerHTML += `<p style="color: green;">✓ Role: ${currentUser.role}</p>`;
+                
+                // Test 3: Store in localStorage
+                localStorage.setItem('auth-token', tokenData.access_token);
+                localStorage.setItem('user', JSON.stringify({
+                    id: currentUser.id,
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    role: currentUser.role
+                }));
+                
+                resultDiv.innerHTML += '<p style="color: green;">✓ Data stored in localStorage</p>';
+                resultDiv.innerHTML += '<p style="color: blue; font-weight: bold;">Authentication successful! You can now access the dashboard.</p>';
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<p style="color: red;">✗ Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Run test automatically
+        testAuth();
+    </script>
+</body>
+</html>

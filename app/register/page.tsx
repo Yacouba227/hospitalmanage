@@ -21,17 +21,17 @@ export default function RegisterPage() {
     
     // Validation
     if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
+      setError('Veuillez remplir tous les champs');
       return;
     }
-    
+          
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Les mots de passe ne correspondent pas');
       return;
     }
-    
+          
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
 
@@ -53,7 +53,7 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Registration failed');
+        throw new Error(data.detail || "Échec de l'inscription");
       }
 
       // Since registration doesn't return a token, we'll redirect to login
@@ -65,7 +65,7 @@ export default function RegisterPage() {
         router.push('/login');
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration');
+      setError(err.message || "Une erreur s'est produite lors de l'inscription");
     }
   };
 
@@ -74,10 +74,10 @@ export default function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Hospital Management System
+            Système de gestion hospitalière
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Create a new account
+            Créer un nouveau compte
           </p>
         </div>
         
@@ -90,7 +90,7 @@ export default function RegisterPage() {
           
           {success && (
             <div className="mb-4 bg-green-50 text-green-700 px-4 py-3 rounded text-sm">
-              Account created successfully! Redirecting to dashboard...
+              Compte créé avec succès ! Redirection vers le tableau de bord...
             </div>
           )}
           
@@ -98,7 +98,7 @@ export default function RegisterPage() {
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Full Name
+                  Nom complet
                 </label>
                 <input
                   id="name"
@@ -114,7 +114,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email Address
+                  Adresse email
                 </label>
                 <input
                   id="email"
@@ -130,7 +130,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Password
+                  Mot de passe
                 </label>
                 <input
                   id="password"
@@ -145,7 +145,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Confirm Password
+                  Confirmer le mot de passe
                 </label>
                 <input
                   id="confirmPassword"
@@ -160,7 +160,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Role
+                  Rôle
                 </label>
                 <select
                   id="role"
@@ -169,10 +169,10 @@ export default function RegisterPage() {
                   onChange={(e) => setRole(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
                 >
-                  <option value="Administrator">Administrator</option>
-                  <option value="Doctor">Doctor</option>
-                  <option value="Nurse">Nurse</option>
-                  <option value="Secretary">Secretary</option>
+                  <option value="Administrator">Administrateur</option>
+                  <option value="Doctor">Médecin</option>
+                  <option value="Nurse">Infirmier</option>
+                  <option value="Secretary">Secrétaire</option>
                   <option value="Patient">Patient</option>
                 </select>
               </div>
@@ -182,16 +182,16 @@ export default function RegisterPage() {
                   type="submit"
                   className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                 >
-                  Register
+                  S'inscrire
                 </button>
               </div>
             </form>
           )}
 
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?{' '}
+            Vous avez déjà un compte ?{' '}
             <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-              Sign in here
+              Se connecter ici
             </Link>
           </div>
         </div>

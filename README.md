@@ -20,6 +20,20 @@ A comprehensive hospital management application built with Next.js, FastAPI, and
 - Secretary: Manage appointments and patient check-ins
 - Patient: View personal information and appointments
 
+## Login Credentials
+
+### Test User (Recommended for debugging):
+- **Email**: `test@hospital.com`
+- **Password**: `test123`
+- **Role**: Administrator
+
+### Original Admin User:
+- **Email**: `admin@hospital.com`
+- **Password**: `password`
+- **Role**: Administrator
+
+> Note: If the original admin credentials don't work, use the test user credentials above.
+
 ## Technical Architecture
 
 - **Frontend**: Next.js 14+ with TypeScript

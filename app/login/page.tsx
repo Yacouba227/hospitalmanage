@@ -20,13 +20,13 @@ export default function LoginPage() {
 
     // Validation
     if (!email || !password) {
-      setError("Veuillez saisir l'email et le mot de passe");
+      setError("Please enter both email and password");
       setLoading(false);
       return;
     }
 
     try {
-      console.log("Login attempt:", { email, password });
+      console.log("Login attempt started:", { email, password });
       
       // Step 1: Get authentication token
       const tokenResponse = await fetch(`${apiUrl}/token`, {
@@ -44,14 +44,15 @@ export default function LoginPage() {
       
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.json();
-        throw new Error(errorData.detail || "Identifiants invalides");
+        throw new Error(errorData.detail || "Invalid credentials");
       }
 
       const tokenData = await tokenResponse.json();
-      console.log("Token received:", tokenData.access_token.substring(0, 20) + "...");
+      console.log("✓ Token received successfully");
 
       // Step 2: Store token immediately
       localStorage.setItem("auth-token", tokenData.access_token);
+      console.log("✓ Token stored in localStorage");
       
       // Step 3: Fetch user data
       const userResponse = await fetch(`${apiUrl}/users`, {
@@ -63,17 +64,17 @@ export default function LoginPage() {
       console.log("User response status:", userResponse.status);
       
       if (!userResponse.ok) {
-        throw new Error("Échec de la récupération des informations utilisateur");
+        throw new Error("Failed to fetch user information");
       }
 
       const users = await userResponse.json();
-      console.log("Users found:", users.length);
+      console.log("✓ User data received");
       
       const currentUser = users.find((u: any) => u.email === email);
-      console.log("Current user:", currentUser);
+      console.log("✓ Current user found:", currentUser?.email);
 
       if (!currentUser) {
-        throw new Error("Utilisateur non trouvé dans le système");
+        throw new Error("User not found in system");
       }
 
       // Step 4: Store user data
@@ -85,15 +86,20 @@ export default function LoginPage() {
       };
 
       localStorage.setItem("user", JSON.stringify(userData));
-      console.log("User data stored successfully");
+      console.log("✓ User data stored successfully");
 
-      // Step 5: Redirect with full page reload
-      console.log("Redirecting to dashboard...");
+      // Step 5: Verify storage
+      const storedToken = localStorage.getItem("auth-token");
+      const storedUser = localStorage.getItem("user");
+      console.log("✓ Storage verification - Token:", !!storedToken, "User:", !!storedUser);
+
+      // Step 6: Redirect with full page reload
+      console.log("✓ Redirecting to dashboard...");
       window.location.href = '/dashboard';
 
     } catch (err: any) {
-      console.error("Login failed:", err);
-      setError(err.message || "Échec de la connexion. Veuillez réessayer.");
+      console.error("✗ Login failed:", err);
+      setError(err.message || "Login failed. Please try again.");
       // Clear any partial data
       localStorage.removeItem("auth-token");
       localStorage.removeItem("user");
@@ -107,26 +113,29 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Système de gestion hospitalière
+            Hospital Management System
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Connectez-vous à votre compte
+            Sign in to your account
           </p>
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
-              Identifiants de test :
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
+              🔐 Test Credentials:
             </p>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              Email : test@hospital.com<br/>
-              Mot de passe : test123
+            <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+              <p><strong>Email:</strong> test@hospital.com</p>
+              <p><strong>Password:</strong> test123</p>
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+              Or use: admin@hospital.com / password
             </p>
           </div>
         </div>
 
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           {error && (
-            <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded text-sm">
-              {error}
+            <div className="mb-4 bg-red-50 text-red-700 px-4 py-3 rounded text-sm border border-red-200">
+              ❌ {error}
             </div>
           )}
 
@@ -136,7 +145,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Adresse email
+                Email Address
               </label>
               <input
                 id="email"
@@ -148,6 +157,7 @@ export default function LoginPage() {
                 required
                 disabled={loading}
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm disabled:opacity-50"
+                placeholder="Enter your email"
               />
             </div>
 
@@ -156,7 +166,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Mot de passe
+                Password
               </label>
               <input
                 id="password"
@@ -168,6 +178,7 @@ export default function LoginPage() {
                 required
                 disabled={loading}
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm disabled:opacity-50"
+                placeholder="Enter your password"
               />
             </div>
 
@@ -184,7 +195,7 @@ export default function LoginPage() {
                   htmlFor="remember-me"
                   className="ml-2 block text-sm text-gray-900 dark:text-gray-300"
                 >
-                  Se souvenir de moi
+                  Remember me
                 </label>
               </div>
             </div>
@@ -193,7 +204,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center">
@@ -201,23 +212,29 @@ export default function LoginPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Connexion en cours...
+                    Authenticating...
                   </span>
                 ) : (
-                  "Se connecter"
+                  "🔐 Sign in"
                 )}
               </button>
             </div>
           </form>
 
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Vous n'avez pas de compte ?{" "}
+            Don't have an account?{" "}
             <Link
               href="/register"
               className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              S'inscrire ici
+              Register here
             </Link>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              Need help? Check the console (F12) for detailed logs during login
+            </p>
           </div>
         </div>
       </div>

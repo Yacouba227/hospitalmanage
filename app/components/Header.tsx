@@ -27,7 +27,7 @@ const Header = () => {
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-              aria-label="Toggle dark mode"
+              aria-label="Basculer le mode sombre"
             >
               {darkMode ? (
                 <SunIcon className="h-5 w-5 text-yellow-400" />
@@ -38,7 +38,7 @@ const Header = () => {
             
             {/* <div className="ml-4 relative">
               <button className="flex text-sm rounded-full focus:outline-none">
-                <span className="sr-only">Open user menu</span>
+                <span className="sr-only">Ouvrir le menu utilisateur</span>
                 <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
                   U
                 </div>
@@ -50,7 +50,7 @@ const Header = () => {
             <button
               onClick={toggleDarkMode}
               className="p-2 mr-2 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-              aria-label="Toggle dark mode"
+              aria-label="Basculer le mode sombre"
             >
               {darkMode ? (
                 <SunIcon className="h-5 w-5 text-yellow-400" />
@@ -64,7 +64,7 @@ const Header = () => {
               className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
               aria-expanded="false"
             >
-              <span className="sr-only">Open main menu</span>
+              <span className="sr-only">Ouvrir le menu principal</span>
               {isMenuOpen ? (
                 <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
               ) : (

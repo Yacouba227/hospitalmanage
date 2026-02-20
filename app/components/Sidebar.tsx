@@ -10,12 +10,12 @@ const Sidebar = () => {
   const pathname = usePathname();
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: UserGroupIcon },
+    { name: 'Tableau de bord', href: '/dashboard', icon: UserGroupIcon },
     { name: 'Patients', href: '/patients', icon: UserGroupIcon },
-    { name: 'Medical Records', href: '/records', icon: DocumentTextIcon },
-    { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
-    { name: 'Prescriptions', href: '/prescriptions', icon: ClipboardDocumentListIcon },
-    { name: 'Users', href: '/users', icon: ShieldCheckIcon },
+    { name: 'Dossiers médicaux', href: '/records', icon: DocumentTextIcon },
+    { name: 'Rendez-vous', href: '/appointments', icon: CalendarIcon },
+    { name: 'Ordonnances', href: '/prescriptions', icon: ClipboardDocumentListIcon },
+    { name: 'Utilisateurs', href: '/users', icon: ShieldCheckIcon },
   ];
 
   return (
@@ -32,7 +32,7 @@ const Sidebar = () => {
             />
             
           </div> */}
-          <h1 className="text-xl text-center font-bold text-blue-600 dark:text-blue-400 ml-2">Hospital Management System</h1>
+          <h1 className="text-xl text-center font-bold text-blue-600 dark:text-blue-400 ml-2">Système de Gestion Hôpital</h1>
         </div>
         
         <nav className="flex-1 px-2 py-4">
@@ -66,7 +66,7 @@ const Sidebar = () => {
               <span className="font-medium">U</span>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Admin User</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Administrateur</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">admin@hospital.com</p>
             </div>
           </div>
